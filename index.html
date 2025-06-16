@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EggBoy Game</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+        .game-container {
+            position: relative;
+        }
+        #gameCanvas {
+            border: 2px solid #333;
+            background-color: white;
+        }
+        #basketCanvas {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            border: 2px solid #333;
+            background-color: white;
+        }
+        #eggCount {
+            position: absolute;
+            top: 140px;
+            left: 10px;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        #modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            border: 2px solid #333;
+            border-radius: 10px;
+            z-index: 1000;
+        }
+        #modal input {
+            padding: 10px;
+            margin: 10px 0;
+            width: 200px;
+        }
+        #modal button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #modal button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <canvas id="gameCanvas"></canvas>
+        <canvas id="basketCanvas" width="200" height="150"></canvas>
+        <div id="eggCount">80</div>
+    </div>
+    <div id="modal">
+        <h2>Buy Eggs?</h2>
+        <p>Would you like to buy an 80 pack of eggs?</p>
+        <input type="text" id="payment" placeholder="Type 'no' to decline">
+        <button onclick="buyEggs()">Submit</button>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html> 
