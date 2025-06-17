@@ -392,21 +392,22 @@ function celebrate() {
         
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        // Calculate text position to ensure it's centered and not cut off
-        const textY = Math.max(200, eggBoy.y - 400); // Significantly increased distance from EggBoy
+        // Calculate text position to be to the left of EggBoy
+        const textX = Math.max(200, eggBoy.x - 300); // Position text to the left of EggBoy
+        const textY = eggBoy.y; // Same height as EggBoy
         const fontSize = Math.min(72, canvas.width / 12); // Scale font size based on canvas width
         
-        // Draw celebration text above EggBoy with background
+        // Draw celebration text to the left of EggBoy with background
         ctx.save();
         // Draw text background with more padding
         ctx.fillStyle = 'rgba(255, 255, 255, 0.95)'; // Increased opacity for better visibility
-        ctx.fillRect(0, textY - fontSize - 30, canvas.width, fontSize * 2.5); // Increased padding and height
+        ctx.fillRect(textX - 150, textY - fontSize/2 - 20, 300, fontSize + 40); // Increased padding and height
         // Draw text
         ctx.font = `bold ${fontSize}px Arial`;
         ctx.fillStyle = '#FF0000';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('Congrats Big Boy!', canvas.width / 2, textY);
+        ctx.fillText('Congrats Big Boy!', textX, textY);
         ctx.restore();
         
         // Draw dancing EggBoy
