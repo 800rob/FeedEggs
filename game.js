@@ -17,6 +17,30 @@ let currentMessage = null;  // Track current message
 let messageTimer = null;    // Track message display time
 let sadMessage = null;  // Track sad message
 
+// Add a variable to store the selected voice
+let maleVoice = null;
+
+// Function to load voices and set the male voice
+function loadVoices() {
+    const voices = window.speechSynthesis.getVoices();
+    maleVoice = voices.find(voice => voice.lang === 'en-US' && voice.name.includes('male'));
+    // Fallback to any male voice if en-US male is not found
+    if (!maleVoice) {
+        maleVoice = voices.find(voice => voice.name.includes('male'));
+    }
+    // Fallback to default if no male voice is found
+    if (!maleVoice && voices.length > 0) {
+        maleVoice = voices[0];
+    }
+}
+
+// Listen for voiceschanged event to load voices
+if ('onvoiceschanged' in window.speechSynthesis) {
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+} else {
+    loadVoices(); // Load voices immediately if event not supported
+}
+
 // Get basket canvas
 const basketCanvas = document.getElementById('basketCanvas');
 const basketCtx = basketCanvas.getContext('2d');
@@ -180,6 +204,38 @@ function speakGameOver() {
                     window.speechSynthesis.speak(utterance);
                 }
             }, 100);
+        } catch (error) {
+            console.error('Speech synthesis error:', error);
+        }
+    }
+}
+
+// Add new function for winning sound byte
+function speakCongratsBigBoy() {
+    if ('speechSynthesis' in window) {
+        try {
+            // Cancel any ongoing speech
+            window.speechSynthesis.cancel();
+            
+            // Create and configure the utterance
+            const utterance = new SpeechSynthesisUtterance("Congrats Big Boy!");
+            utterance.rate = 1.2;  // Upbeat tempo
+            utterance.pitch = 1.4; // Higher pitch for excitement
+            
+            // Set the male voice if available
+            if (maleVoice) {
+                utterance.voice = maleVoice;
+            } else {
+                console.warn('Male voice not found, using default.');
+            }
+            
+            // Add event listeners for debugging
+            utterance.onstart = () => console.log('Congrats speech started');
+            utterance.onend = () => console.log('Congrats speech ended');
+            utterance.onerror = (event) => console.error('Congrats speech error:', event);
+            
+            // Force the speech to play
+            window.speechSynthesis.speak(utterance);
         } catch (error) {
             console.error('Speech synthesis error:', error);
         }
@@ -375,6 +431,11 @@ function celebrate() {
     // Play party sound
     createPartySound();
     
+    // Play congrats speech after party sound has a chance to start
+    setTimeout(() => {
+        speakCongratsBigBoy();
+    }, 200);
+    
     function animate() {
         if (frames >= 180) { // 3 seconds at 60fps
             if (isDancing) {
@@ -392,20 +453,36 @@ function celebrate() {
         
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        // Calculate text position to be to the left of EggBoy
-        const textX = Math.max(200, eggBoy.x - 300); // Position text to the left of EggBoy
+        // Calculate text position
+        const textX = 20; // Start text from a small left margin
         const textY = eggBoy.y; // Same height as EggBoy
-        const fontSize = Math.min(72, canvas.width / 12); // Scale font size based on canvas width
-        
+        const fontSize = 24; // Reduced by 50% from 48
+
         // Draw celebration text to the left of EggBoy with background
         ctx.save();
-        // Draw text background with more padding
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.95)'; // Increased opacity for better visibility
-        ctx.fillRect(textX - 150, textY - fontSize/2 - 20, 300, fontSize + 40); // Increased padding and height
+        
+        const bgPaddingHorizontal = 15; // Padding around text for background
+        const bgPaddingVertical = 10; // Adjusted for smaller font size
+
+        // Calculate background dimensions
+        const bgX = textX - bgPaddingHorizontal;
+        const bgY = textY - (fontSize / 2) - bgPaddingVertical;
+
+        // Ensure background doesn't go over EggBoy
+        const eggBoyLeftVisualEdge = eggBoy.x - (eggBoy.width / 2);
+        const desiredMaxBgRight = eggBoyLeftVisualEdge - 20; // Keep 20px gap from EggBoy
+
+        const bgWidth = desiredMaxBgRight - bgX;
+        const bgHeight = fontSize + (2 * bgPaddingVertical);
+
+        // Draw text background
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+        ctx.fillRect(bgX, bgY, bgWidth, bgHeight);
+
         // Draw text
         ctx.font = `bold ${fontSize}px Arial`;
         ctx.fillStyle = '#FF0000';
-        ctx.textAlign = 'center';
+        ctx.textAlign = 'left'; // Align text to the left
         ctx.textBaseline = 'middle';
         ctx.fillText('Congrats Big Boy!', textX, textY);
         ctx.restore();
@@ -721,18 +798,30 @@ function draw() {
         // Draw current message if it exists
         if (currentMessage) {
             ctx.save();
-            // Position to the left of EggBoy, but not too far left
-            const messageX = Math.max(200, eggBoy.x - 300);  // Ensure minimum distance from left edge
+            // Position to the left of EggBoy, and within bounds
+            const messageX = 20;  // Start text from a small left margin
             const messageY = eggBoy.y;        // Same height as EggBoy
+            const messageFontSize = 14; // Reduced by 50% from 28
+
+            const msgBgPaddingHorizontal = 10;
+            const msgBgPaddingVertical = 7; // Adjusted for smaller font size
+
+            const msgBgX = messageX - msgBgPaddingHorizontal;
+            const msgBgY = messageY - (messageFontSize / 2) - msgBgPaddingVertical;
+            const msgEggBoyLeftVisualEdge = eggBoy.x - (eggBoy.width / 2);
+            const msgDesiredMaxBgRight = msgEggBoyLeftVisualEdge - 20; // Keep 20px gap from EggBoy
+
+            const msgBgWidth = msgDesiredMaxBgRight - msgBgX;
+            const msgBgHeight = messageFontSize + (2 * msgBgPaddingVertical);
             
             // Draw background
             ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-            ctx.fillRect(messageX - 150, messageY - 25, 300, 50);  // Smaller background
+            ctx.fillRect(msgBgX, msgBgY, msgBgWidth, msgBgHeight);
             
             // Draw text
-            ctx.font = 'bold 28px Arial';  // Smaller font
+            ctx.font = `bold ${messageFontSize}px Arial`;
             ctx.fillStyle = '#FF0000';
-            ctx.textAlign = 'center';
+            ctx.textAlign = 'left';
             ctx.textBaseline = 'middle';
             ctx.fillText(currentMessage, messageX, messageY);
             ctx.restore();
@@ -741,18 +830,30 @@ function draw() {
         // Draw sad message if out of eggs
         if (isSad) {
             ctx.save();
-            // Position to the left of EggBoy, but not too far left
-            const messageX = Math.max(200, eggBoy.x - 300);  // Ensure minimum distance from left edge
+            // Position to the left of EggBoy, and within bounds
+            const messageX = 20;  // Start text from a small left margin
             const messageY = eggBoy.y;        // Same height as EggBoy
-            
+            const messageFontSize = 14; // Reduced by 50% from 28
+
+            const msgBgPaddingHorizontal = 10;
+            const msgBgPaddingVertical = 7; // Adjusted for smaller font size
+
+            const msgBgX = messageX - msgBgPaddingHorizontal;
+            const msgBgY = messageY - (messageFontSize / 2) - msgBgPaddingVertical;
+            const msgEggBoyLeftVisualEdge = eggBoy.x - (eggBoy.width / 2);
+            const msgDesiredMaxBgRight = msgEggBoyLeftVisualEdge - 20; // Keep 20px gap from EggBoy
+
+            const msgBgWidth = msgDesiredMaxBgRight - msgBgX;
+            const msgBgHeight = messageFontSize + (2 * msgBgPaddingVertical);
+
             // Draw background
             ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-            ctx.fillRect(messageX - 150, messageY - 25, 300, 50);  // Smaller background
+            ctx.fillRect(msgBgX, msgBgY, msgBgWidth, msgBgHeight);
             
             // Draw text
-            ctx.font = 'bold 28px Arial';  // Smaller font
+            ctx.font = `bold ${messageFontSize}px Arial`;
             ctx.fillStyle = '#FF0000';
-            ctx.textAlign = 'center';
+            ctx.textAlign = 'left';
             ctx.textBaseline = 'middle';
             ctx.fillText('EggBoy got REAL sad now', messageX, messageY);
             ctx.restore();
